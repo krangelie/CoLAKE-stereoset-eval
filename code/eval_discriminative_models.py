@@ -43,7 +43,7 @@ def parse_args():
     parser.add_argument("--skip-intrasentence", help="Skip intrasentence evaluation.",
                         default=False, action="store_true")
     parser.add_argument("--intrasentence-model", type=str, default='BertLM', choices=[
-                        'BertLM', 'BertNextSentence', 'RoBERTaLM', 'XLNetLM', 'XLMLM', 'GPT2LM', 'ModelNSP'],
+                        'BertLM', 'BertNextSentence', 'RoBERTaLM', 'CoLake', 'XLNetLM', 'XLMLM', 'GPT2LM', 'ModelNSP'],
                         help="Choose a model architecture for the intrasentence task.")
     parser.add_argument("--intrasentence-load-path", default=None,
                         help="Load a pretrained model for the intrasentence task.")
@@ -85,7 +85,7 @@ class BiasEvaluator():
         self.PRETRAINED_CLASS = pretrained_class
         self.TOKENIZER = tokenizer
         self.tokenizer = getattr(transformers, self.TOKENIZER).from_pretrained(
-            self.PRETRAINED_CLASS, padding_side="right")
+            self.PRETRAINED_CLASS, padding_side="right", add_prefix_space=True)
 
         # to keep padding consistent with the other models -> improves LM score.
         if self.tokenizer.__class__.__name__ == "XLNetTokenizer":
@@ -126,6 +126,7 @@ class BiasEvaluator():
         model = getattr(models, self.INTRASENTENCE_MODEL)(
             self.PRETRAINED_CLASS).to(self.device)
 
+
         if torch.cuda.device_count() > 1:
             print("Let's use", torch.cuda.device_count(), "GPUs!")
             model = nn.DataParallel(model)
@@ -137,7 +138,7 @@ class BiasEvaluator():
 
         if self.INTRASENTENCE_LOAD_PATH:
             state_dict = torch.load(self.INTRASENTENCE_LOAD_PATH)
-            model.load_state_dict(state_dict)
+            model.load_state_dict(state_dict, strict=False)
 
         pad_to_max_length = True if self.batch_size > 1 else False
         dataset = dataloader.IntrasentenceLoader(self.tokenizer, max_seq_length=self.max_seq_length,

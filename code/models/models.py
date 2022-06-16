@@ -1,4 +1,4 @@
-import transformers 
+import transformers
 from torch import nn
 
 class BertLM(transformers.BertPreTrainedModel):
@@ -21,6 +21,15 @@ class RoBERTaLM(transformers.BertPreTrainedModel):
 
     def __new__(self, pretrained_model):
         return transformers.RobertaForMaskedLM.from_pretrained(pretrained_model)
+
+class CoLake(transformers.BertPreTrainedModel):
+    def __init__(self, pretrained_model):
+        pass
+
+    def __new__(self, pretrained_model):
+        config = transformers.RobertaConfig.from_pretrained(pretrained_model, type_vocab_size=3)
+        model = transformers.RobertaForMaskedLM(config=config)
+        return model
 
 class XLNetLM(transformers.BertPreTrainedModel):
     def __init__(self, pretrained_model):
